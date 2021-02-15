@@ -16,7 +16,7 @@ class Ui_Backup:
         self.root = parent
         self.root.title('Backup Folder 1.0')
         window_center(self.root, 900, 700)
-        self.root.iconphoto(True, PhotoImage(file='icon/backup01.png'))
+        self.root.iconphoto(True, PhotoImage(file='~/.local/pyscripts/icon/backup01.png'))
         
         top_frame = Frame(self.root)
         top_frame.pack(pady=5)
@@ -78,6 +78,7 @@ class Ui_Backup:
         
         self.text = Text(bottom_frame, padx=5, pady=5, wrap='none', bg='#000001', fg='lightgreen')
         self.text.config(font=Font(size=12))
+        self.text.config(insertbackground='white')
         self.text.config(xscrollcommand=self.scrollbar_x.set)
         self.text.config(yscrollcommand=self.scrollbar_y.set)
         
@@ -89,8 +90,6 @@ class Ui_Backup:
         if self.show_details == False:
             self.show_details = True
             self.show_btn.config(text='隐藏细节')
-            #width = self.root.winfo_width()
-            #self.root.geometry(f'{width}x600')
             
             self.scrollbar_x.pack(side=BOTTOM, fill=X)
             self.scrollbar_y.pack(side=RIGHT, fill=Y)
