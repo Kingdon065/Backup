@@ -87,6 +87,17 @@ class BackupFolder:
         self.ui.text.insert(INSERT, s)
         self.ui.text.see(END)   # Text控件随输入自动拓展到尾行
         self.ui.text.update()
+
+    def filter(self, path):
+        path_filter = self.ui.path_filter.get().split(';')
+
+        if path_filter == ['']:
+            path_filter[0] = 'null_NULL'
+
+        for keyword in path_filter:
+            if keyword in path:
+                return True
+        return False
     
     def backup2folder(self):
         """备份为文件"""
@@ -98,18 +109,23 @@ class BackupFolder:
             return
         
         backup_folder = self.ui.bakfolderVar.get()
+
         extensions = self.ui.extensions_filter.get().split(';')
-        path_filter = self.ui.path_filter.get()
+        if extensions == ['']:
+            extensions[0] = 'null_NULL'
         
         for folder, subfolders, filenames in os.walk(origin_folder):
             bak_folder = folder.replace(origin_folder, backup_folder)
-            if path_filter not in bak_folder:
+            if self.filter(bak_folder) == False:
                 self.write2text(f'INFO - 创建文件夹<{bak_folder}>...\n')
                 os.makedirs(bak_folder, exist_ok=True)
+            else:
+                self.write2text(f'INFO - 跳过文件夹<{folder}>...\n')
+                continue
 
             for subfolder in subfolders:
                 bak_sub_folder = os.path.join(bak_folder, subfolder)
-                if path_filter not in bak_sub_folder:
+                if self.filter(bak_sub_folder) == False:
                     self.write2text(f'INFO - 创建子文件夹<{bak_sub_folder}>...\n')
                     os.makedirs(bak_sub_folder, exist_ok=True)
 
@@ -119,14 +135,14 @@ class BackupFolder:
                     continue
                 file_name = os.path.join(folder, filename)
                 bak_filename = os.path.join(bak_folder, filename)
-                if path_filter not in file_name:
+                if self.filter(file_name) == False:
                     try:
                         self.write2text(f'INFO - 将<{file_name}>复制到<{bak_filename}>...\n')
                         shutil.copy(file_name, bak_filename)
                     except:
                         self.write2text(f'ERROR - 无法复制{file_name}\n')
                         
-        self.write2text('INFO - 复制完成!\n\n\n')
+        self.write2text('INFO - 复制完成!\n\n')
     
     def backup2zip(self):
         """备份到压缩文件"""
@@ -142,9 +158,7 @@ class BackupFolder:
         if not os.path.exists(os.path.dirname(zip_path)):
             showinfo(title='提示', message='保存zip文件的文件夹不存在!')
             return
-        extensions = self.ui.extensions_filter.get().split(';')
-        path_filter = self.ui.path_filter.get()
-        
+
         self.write2text(f'INFO - 创建文件 {self.zip_filename}，采用{compression}压缩算法...\n')
         c = compressions[compression]
         backupZip = ZipFile(zip_path, 'w', compression=c)   # 使用bzip2压缩算法
@@ -153,24 +167,29 @@ class BackupFolder:
         os.chdir('../')
         folder = os.path.basename(origin_folder)
 
+        extensions = self.ui.extensions_filter.get().split(';')
+        if extensions == ['']:
+            extensions[0] = 'null_NULL'
+
         for folder, subfolders, filenames in os.walk(folder):
-            if path_filter not in folder:
-                self.write2text(f'INFO - 正在添加文件夹 {folder}...\n')
+            if self.filter(folder) == False:
+                self.write2text(f'\nINFO - 正在添加文件夹 {folder}...\n')
                 backupZip.write(folder)
             else:
+                self.write2text(f'\nINFO - 跳过文件夹 {folder}...\n')
                 continue
             for filename in filenames:
-                if os.path.splitext(filename)[1] in extensions: 
-                    self.write2text(f'INFO - 跳过文件 {filename}...\n')
+                if os.path.splitext(filename)[1] in extensions:
+                    self.write2text(f'\nINFO - 跳过文件 {filename}...\n')
                     continue
                 path = os.path.join(folder, filename)
-                if path_filter not in path:
+                if self.filter(path) == False:
                     self.write2text(f'INFO - 正在写入文件 {filename}...\n')
                     backupZip.write(path)
         backupZip.close()
         
         size = bytes2human(os.path.getsize(zip_path))
-        self.write2text(f'INFO - 生成的ZIP文件 {self.zip_filename} ({size})在 {os.path.dirname(zip_path)}\n\n\n')
+        self.write2text(f'INFO - 生成的ZIP文件 {self.zip_filename} ({size})在 {os.path.dirname(zip_path)}\n\n')
 
 
 if __name__ == '__main__':
